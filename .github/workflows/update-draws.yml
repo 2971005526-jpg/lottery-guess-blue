@@ -1,0 +1,31 @@
+name: Update Lottery Draws
+
+on:
+  schedule:
+    # 每周二/四/日 21:30 CST (13:30 UTC)
+    - cron: '30 13 * * 2,4,0'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch latest draws
+        run: python scripts/fetch_draws.py
+
+      - name: Commit & push
+        run: |
+          git config user.name  "lottery-bot"
+          git config user.email "bot@lottery.local"
+          git add index.html
+          git diff --cached --quiet || git commit -m "auto: update draws $(date +'%Y-%m-%d')"
+          git push
