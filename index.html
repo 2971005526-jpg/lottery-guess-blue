@@ -143,7 +143,7 @@ body{font-family:-apple-system,'PingFang SC',sans-serif;display:flex;justify-con
 .r-item{font-size:12px;color:#aaa;line-height:2;padding-left:14px;position:relative}
 .r-item::before{content:'\2022';position:absolute;left:0;color:#e02020}
 /* 按钮区 */
-.btn-area{flex-shrink:0;padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,#fff0f0 60%,transparent)}
+
 .btn{width:100%;height:50px;border-radius:25px;border:none;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;letter-spacing:.5px;transition:all .25s}
 .btn.grey{background:#e8e8e8;color:#bbb;cursor:not-allowed}
 .btn.active{background:linear-gradient(135deg,#e02020,#ff4444);color:#fff;box-shadow:0 4px 16px rgba(224,32,32,.32)}
@@ -209,6 +209,9 @@ body{font-family:-apple-system,'PingFang SC',sans-serif;display:flex;justify-con
           <div class="sel-bar">
             <div class="sel-l">已选：<b id="selNum">—</b></div>
             <div class="sel-r">每期可猜 1 次</div>
+          </div>
+          <div style="padding:12px 16px 16px">
+            <button class="btn grey" id="mainBtn" onclick="onMainBtn()">确定选号</button>
           </div>
         </div>
         <div class="sp" id="sp-wait">
@@ -280,9 +283,7 @@ body{font-family:-apple-system,'PingFang SC',sans-serif;display:flex;justify-con
       </div>
     </div>
   </div>
-  <div class="btn-area">
-    <button class="btn grey" id="mainBtn" onclick="onMainBtn()">选择蓝球号码后确认</button>
-  </div>
+
 </div>
 <script>
 // ===== 真实开奖数据（近10期，接口对接后可替换） =====
@@ -600,7 +601,7 @@ function pickBall(el){
   el.classList.add('on');
   sel=el.dataset.n;
   document.getElementById('selNum').textContent=sel;
-  setBtn('active','确认猜测 — 蓝球 '+sel);
+  setBtn('active','确认选号 — 蓝球 '+sel);
 }
 
 // ===== 确认按钮 =====
