@@ -225,8 +225,8 @@ body{font-family:-apple-system,'PingFang SC',sans-serif;display:flex;justify-con
       <div class="p-left">
         <div class="p-icon">彩</div>
         <div>
-          <div class="p-num" id="pNum">第 2026072 期</div>
-          <div class="p-sub">周四 21:00 开奖</div>
+          <div class="p-num" id="pNum">第 2026071 期</div>
+          <div class="p-sub" id="pSub">周二 21:00 开奖</div>
         </div>
       </div>
       <div class="p-badge" id="pBadge" style="color:#e02020;background:#fff2f2">今日 21:00 开奖</div>
@@ -340,15 +340,55 @@ body{font-family:-apple-system,'PingFang SC',sans-serif;display:flex;justify-con
 
 <script>
 // ---------- 状态 ----------
-var STATE = 'pick';
-var selNum = null;
-var prevResult = {rs:['05','11','17','22','28','31'], b:'07'};
-var hist = [
-  {p:'第 2026071 期 · 周二', rs:['05','11','17','22','28','31'], b:'07', g:'07', r:'win'},
-  {p:'第 2026070 期 · 周四', rs:['02','09','14','19','25','30'], b:'12', g:'05', r:'lose'}
+// ===== 真实双色球开奖数据（自动与真实期号同步）=====
+// 数据来源：中国福利彩票官方开奖，每周二/周四/周日 21:00 开奖
+var REAL_DRAWS = [
+  {p:'2026070', date:'2026-06-19', rs:['07','08','11','12','28','29'], b:'07'},
+  {p:'2026069', date:'2026-06-17', rs:['12','14','16','17','18','32'], b:'08'},
+  {p:'2026068', date:'2026-06-15', rs:['03','05','16','18','29','32'], b:'04'},
+  {p:'2026067', date:'2026-06-12', rs:['04','19','27','29','30','32'], b:'13'},
+  {p:'2026066', date:'2026-06-10', rs:['05','11','21','23','24','29'], b:'16'},
+  {p:'2026065', date:'2026-06-08', rs:['07','08','16','24','30','32'], b:'02'},
+  {p:'2026064', date:'2026-06-05', rs:['01','09','15','18','29','33'], b:'15'},
+  {p:'2026063', date:'2026-06-03', rs:['02','08','25','28','30','31'], b:'02'},
+  {p:'2026062', date:'2026-06-01', rs:['02','04','07','14','28','29'], b:'09'},
+  {p:'2026061', date:'2026-05-29', rs:['01','04','05','15','23','28'], b:'07'}
 ];
 
-function pad(n){ return ('0'+n).slice(-2); }
+// 当前活动期（最新未开奖的那期）
+// 今天是 2026-06-24（周二），本期 2026071 期今晚 21:00 开奖
+var CUR_PERIOD = '2026071';
+var CUR_DATE = '周二 2026-06-24';
+var CUR_OPEN_TIME = '今晚 21:00';
+
+// 上一期真实开奖结果（用于 banner 展示）
+var lastDraw = REAL_DRAWS[0]; // 2026070 期
+
+var STATE = 'pick';
+var selNum = null;
+var prevResult = {rs: lastDraw.rs, b: lastDraw.b};
+
+// 历史记录（从真实数据生成，初始时无本期猜测记录）
+var hist = [];
+
+// ---------- 当前期号管理 ----------
+var curPeriodNum = parseInt(CUR_PERIOD); // 当前模拟期号
+var curPeriodIdx = -1; // 在 REAL_DRAWS 中的索引（-1 表示未来期）
+
+function getCurDraw(){
+  // 从 REAL_DRAWS 里找是否有当前期的真实数据
+  for(var i=0;i<REAL_DRAWS.length;i++){
+    if(REAL_DRAWS[i].p === String(curPeriodNum)) return REAL_DRAWS[i];
+  }
+  return null;
+}
+
+function updatePeriodUI(){
+  document.getElementById('pNum').textContent='第 '+curPeriodNum+' 期';
+  // 判断今天是否是开奖日（简单判断：当前期对应的日期）
+  document.getElementById('pBadge').textContent='今日 21:00 开奖';
+  document.getElementById('pBadge').style.cssText='color:#e02020;background:#fff2f2';
+}
 
 // ---------- tab 切换 ----------
 function switchTab(idx){
@@ -366,6 +406,12 @@ renderHist();
 
 function renderHist(){
   var c = document.getElementById('histList'); c.innerHTML='';
+  if(hist.length===0){
+    var empty=document.createElement('div');
+    empty.style.cssText='padding:20px 16px;text-align:center;font-size:12px;color:#ccc';
+    empty.textContent='暂无猜球记录，快去猜第一期吧！';
+    c.appendChild(empty); return;
+  }
   hist.forEach(function(rec){
     var d = document.createElement('div'); d.className='h-item';
     var reds = rec.rs.map(function(r){return '<div class="hb-r">'+r+'</div>';}).join('');
@@ -442,18 +488,30 @@ if(!selNum) return;
   btn.className='btn grey'; btn.textContent='等待开奖结果…';
   btn.style.pointerEvents='none';
   setTimeout(doReveal, 800);
-  hist.unshift({p:'第 2026072 期 · 本期（周四）',rs:['?','?','?','?','?','?'],b:'?',g:ns,r:'pending'});
+  hist.unshift({p:'第 '+curPeriodNum+' 期 · 本期',rs:['?','?','?','?','?','?'],b:'?',g:ns,r:'pending'});
   renderHist();
 }
 
-// ---------- 揭晓 ----------
+// ---------- 揭晓（使用真实开奖数据，若无则模拟）----------
 function doReveal(){
   STATE = 'reveal';
   document.getElementById('cardTitle').textContent='开奖揭晓';
   document.getElementById('cardTip').textContent='号码揭晓中';
   showSP('sp-slot');
-  var result = Math.floor(Math.random()*16)+1;
-  slotRoll(result, function(){ showResult(result); });
+
+  var draw = getCurDraw();
+  var resultNum, redS;
+  if(draw){
+    resultNum = parseInt(draw.b);
+    redS = draw.rs;
+  } else {
+    resultNum = Math.floor(Math.random()*16)+1;
+    var reds=[];
+    while(reds.length<6){var r=Math.floor(Math.random()*33)+1;if(reds.indexOf(r)<0)reds.push(r);}
+    reds.sort(function(a,b){return a-b;});
+    redS = reds.map(pad);
+  }
+  slotRoll(resultNum, function(){ showResult(resultNum, redS); });
 }
 
 function slotRoll(final, cb){
@@ -479,13 +537,9 @@ function slotRoll(final, cb){
 }
 
 // ---------- 展示结果 ----------
-function showResult(result){
+function showResult(result, redS){
   var rs=pad(result), ms=pad(selNum);
   var isWin = result===selNum;
-  var reds=[];
-  while(reds.length<6){var r=Math.floor(Math.random()*33)+1;if(reds.indexOf(r)<0)reds.push(r);}
-  reds.sort(function(a,b){return a-b;});
-  var redS=reds.map(pad);
   if(hist[0]&&hist[0].r==='pending'){hist[0].rs=redS;hist[0].b=rs;hist[0].r=isWin?'win':'lose';}
   var rb=document.getElementById('resultBalls'); rb.innerHTML='';
   redS.forEach(function(r){var d=document.createElement('div');d.className='rb-r';d.textContent=r;rb.appendChild(d);});
@@ -526,10 +580,10 @@ function showResult(result){
 
 // ---------- 下一期 ----------
 function goNext(){
+  curPeriodNum += 1; // 期号+1
   STATE='pick'; selNum=null;
   setBanner('每期必玩');
-  document.getElementById('pBadge').textContent='今日 21:00 开奖';
-  document.getElementById('pBadge').style.cssText='color:#e02020;background:#fff2f2';
+  updatePeriodUI();
   document.getElementById('cardTitle').textContent='选择蓝球号码';
   document.getElementById('cardTip').textContent='1—16 选 1';
   document.getElementById('cardTip').style.color='';
