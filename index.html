@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>猜蓝球 - 彩票频道</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#fff0f0}
+body{font-family:-apple-system,'PingFang SC',sans-serif;display:flex;justify-content:center;align-items:stretch}
+
+/* ===== 整体框架：100dvh 三层分区 ===== */
+.wrap{
+  width:100%;max-width:430px;
+  height:100dvh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ===== 顶部固定区 ===== */
+.page-header{
+  flex-shrink:0;
+  background:linear-gradient(180deg,#ffe4e6 0%,#fff0f0 100%);
+  padding-bottom:14px;
+}
+
+/* 导航 */
+.nav{height:44px;display:flex;align-items:center;padding:0 16px;gap:6px}
+.nav-back{font-size:24px;color:#333;line-height:1;margin-right:2px}
+.nav-title{font-size:17px;font-weight:600;color:#222;flex:1}
+.nav-logo{width:26px;height:26px;background:linear-gradient(135deg,#e02020,#ff4444);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:bold}
+
+/* Banner */
+.banner{margin:0 14px;border-radius:16px;background:#fff;padding:14px 16px 12px;position:relative;box-shadow:0 2px 12px rgba(255,100,120,.12)}
+.banner-deco{position:absolute;right:-16px;top:-16px;width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(255,180,190,.3),rgba(255,150,165,.1));pointer-events:none}
+.banner-deco2{position:absolute;right:32px;bottom:-20px;width:60px;height:60px;border-radius:50%;background:rgba(255,180,190,.12);pointer-events:none}
+.b-tag{display:inline-flex;align-items:center;background:#fff0f2;border-radius:20px;padding:2px 10px;font-size:11px;color:#e02020;margin-bottom:6px;font-weight:500}
+.b-title{font-size:20px;font-weight:800;color:#222;letter-spacing:.5px;margin-bottom:2px}
+.b-title span{color:#e02020}
+.b-prev-lbl{font-size:11px;color:#bbb;margin-bottom:5px}
+.b-balls{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
+.bb{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;position:relative;flex-shrink:0}
+.bb.red{background:radial-gradient(circle at 35% 30%,#ff8a75,#e5472a);color:#fff;box-shadow:0 2px 5px rgba(229,71,42,.28)}
+.bb.blue{background:radial-gradient(circle at 35% 30%,#7ab3ff,#2255cc);color:#fff;box-shadow:0 2px 5px rgba(34,85,204,.28)}
+.bb.red::after,.bb.blue::after{content:'';position:absolute;top:5px;left:6px;width:8px;height:3px;background:rgba(255,255,255,.4);border-radius:50%;transform:rotate(-30deg)}
+.b-plus{color:#ccc;font-size:13px;flex-shrink:0}
+
+/* ===== 中间滚动区 ===== */
+.scroll-area{
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding-bottom:8px;
+}
+.scroll-area::-webkit-scrollbar{display:none}
+
+/* 期号 */
+.period{margin:10px 14px 0;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#fff;border-radius:12px}
+.p-left{display:flex;align-items:center;gap:8px}
+.p-icon{width:22px;height:22px;background:linear-gradient(135deg,#e02020,#ff5252);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:bold;flex-shrink:0}
+.p-num{font-size:13px;font-weight:600;color:#222}
+.p-sub{font-size:11px;color:#999;margin-top:1px}
+.p-badge{font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500;white-space:nowrap}
+
+/* 主卡片 */
+.card{margin:8px 14px 0;background:#fff;border-radius:16px;overflow:hidden}
+.card-hd{padding:12px 16px 0;display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:15px;font-weight:700;color:#222;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';width:3px;height:15px;background:linear-gradient(180deg,#e02020,#ff7070);border-radius:2px;display:inline-block;flex-shrink:0}
+.card-tip{font-size:12px;color:#999;transition:color .3s}
+
+/* 状态面板 */
+.state-panel{overflow:hidden}
+.state-panel .sp{display:none;flex-direction:column}
+.state-panel .sp.active{display:flex;animation:spIn .25s ease both}
+@keyframes spIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* 选号态 */
+.ball-row-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:12px 16px 4px;scrollbar-width:none}
+.ball-row-wrap::-webkit-scrollbar{display:none}
+.ball-row{display:flex;flex-wrap:nowrap;gap:7px;width:max-content}
+.bi{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;background:#fff0f0;color:#e02020;border:2px solid transparent;position:relative;flex-shrink:0;user-select:none}
+.bi:active{transform:scale(.85)}
+.bi.on{background:radial-gradient(circle at 35% 30%,#6699ff,#1155cc);color:#fff;border-color:#1155cc;box-shadow:0 4px 12px rgba(17,85,204,.4);transform:scale(1.1)}
+.bi.on::after{content:'';position:absolute;top:6px;left:6px;width:8px;height:3px;background:rgba(255,255,255,.35);border-radius:50%;transform:rotate(-30deg)}
+.bi.dis{opacity:.4;cursor:not-allowed;pointer-events:none}
+.sel-bar{margin:8px 16px 14px;padding:9px 14px;background:#fff5f5;border-radius:10px;display:flex;align-items:center;justify-content:space-between}
+.sel-l{font-size:13px;color:#666}
+.sel-l b{color:#e02020;font-size:16px;font-weight:700}
+.sel-r{font-size:12px;color:#aaa}
+
+/* 待开奖态 */
+.wait-inner{padding:14px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.wait-lbl{font-size:13px;color:#999}
+.wait-ball-big{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6699ff,#1155cc);color:#fff;font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(17,85,204,.4);position:relative;animation:waitPulse 2s ease-in-out infinite}
+.wait-ball-big::after{content:'';position:absolute;top:11px;left:13px;width:13px;height:5px;background:rgba(255,255,255,.35);border-radius:50%;transform:rotate(-30deg)}
+@keyframes waitPulse{0%,100%{box-shadow:0 4px 18px rgba(17,85,204,.4),0 0 0 0 rgba(17,85,204,.25)}50%{box-shadow:0 4px 18px rgba(17,85,204,.4),0 0 0 12px rgba(17,85,204,0)}}
+.wait-desc{font-size:12px;color:#bbb;text-align:center}
+
+/* 老虎机 */
+.slot-wrap{padding:18px 16px 22px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.slot-lbl{font-size:13px;color:#999}
+.slot-drum{width:68px;height:68px;border-radius:50%;overflow:hidden;position:relative;background:radial-gradient(circle at 35% 30%,#6699ff,#1155cc);box-shadow:0 4px 20px rgba(17,85,204,.45)}
+.slot-inner{position:absolute;top:0;left:0;width:100%;display:flex;flex-direction:column;align-items:center;transition:top .05s linear}
+.slot-num{width:68px;height:68px;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:800;color:#fff;flex-shrink:0}
+.slot-drum::after{content:'';position:absolute;top:11px;left:16px;width:14px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;transform:rotate(-30deg);pointer-events:none}
+
+/* 结果态 */
+.result-inner{padding:14px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.result-balls-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:center}
+.rb-r{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7070,#e02020);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.rb-b{width:36px;height:36px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6699ff,#1155cc);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;position:relative}
+.rb-b::after{content:'';position:absolute;top:7px;left:8px;width:9px;height:3px;background:rgba(255,255,255,.35);border-radius:50%;transform:rotate(-30deg)}
+.rb-b.hl{animation:hlPulse 1.4s ease-in-out infinite}
+@keyframes hlPulse{0%,100%{box-shadow:0 0 0 4px rgba(17,85,204,.2),0 4px 14px rgba(17,85,204,.4)}50%{box-shadow:0 0 0 10px rgba(17,85,204,0),0 4px 14px rgba(17,85,204,.4)}}
+.rb-g{width:36px;height:36px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bbb,#888);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;animation:missShake .5s ease .2s both}
+@keyframes missShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.cmp-row{display:flex;align-items:center;justify-content:center;gap:22px}
+.cmp-item{display:flex;flex-direction:column;align-items:center;gap:5px}
+.cmp-lbl{font-size:11px;color:#bbb}
+.vs{font-size:13px;color:#ddd;font-weight:700}
+
+/* 奖励 */
+.reward-bar{margin:8px 14px 0;padding:12px 14px;border-radius:14px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fffbee,#fff8d6);border:1px solid #ffe577;animation:rewardIn .4s ease .1s both}
+@keyframes rewardIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.reward-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#ff9500,#ffb340);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.reward-info{flex:1}
+.reward-title{font-size:13px;font-weight:700;color:#333;margin-bottom:2px}
+.reward-desc{font-size:12px;color:#aaa}
+.reward-btn{background:linear-gradient(135deg,#ff9500,#ffb340);color:#fff;border:none;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
+
+/* 购彩 */
+.upsell{margin:8px 14px 0;padding:12px 14px;background:#fff;border-radius:14px;display:flex;align-items:center;gap:10px}
+.upsell-info{flex:1}
+.upsell-title{font-size:13px;color:#333;font-weight:600;margin-bottom:2px}
+.upsell-desc{font-size:12px;color:#aaa;line-height:1.5}
+.upsell-btn{flex-shrink:0;height:32px;padding:0 14px;background:linear-gradient(135deg,#e02020,#ff4444);color:#fff;border:none;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer}
+
+/* ===== 底部 tab 区（历史 + 规则）===== */
+.bottom-tabs{margin:8px 14px 0;background:#fff;border-radius:16px;overflow:hidden}
+.tab-nav{display:flex;border-bottom:1px solid #f5f5f5}
+.tab-btn{flex:1;height:40px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:#aaa;cursor:pointer;border:none;background:transparent;position:relative;transition:color .2s}
+.tab-btn.active{color:#e02020;font-weight:700}
+.tab-btn.active::after{content:'';position:absolute;bottom:0;left:25%;width:50%;height:2px;background:linear-gradient(90deg,#e02020,#ff6060);border-radius:2px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* 历史 */
+.h-item{padding:11px 16px;border-top:1px solid #f8f8f8;display:flex;align-items:center;justify-content:space-between}
+.h-left{display:flex;flex-direction:column;gap:3px}
+.h-period{font-size:11px;color:#bbb}
+.h-balls{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.hb-r{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7070,#e02020);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.hb-b{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6699ff,#1155cc);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.hb-g{width:20px;height:20px;border-radius:50%;border:1.5px dashed #1155cc;color:#1155cc;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#f0f4ff}
+.h-tag{padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600}
+.h-tag.win{background:#dce8ff;color:#1155cc}
+.h-tag.lose{background:#f0f0f0;color:#aaa}
+.h-tag.pending{background:#fff8e6;color:#b07800}
+
+/* 规则 */
+.rules{padding:14px 16px}
+.rules-title{font-size:13px;font-weight:700;color:#222;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.rules-title::before{content:'';width:3px;height:14px;background:linear-gradient(180deg,#e02020,#ff7070);border-radius:2px}
+.r-item{font-size:12px;color:#aaa;line-height:2;padding-left:14px;position:relative}
+.r-item::before{content:'\2022';position:absolute;left:0;color:#e02020}
+
+/* ===== 底部按钮区 ===== */
+.btn-area{
+  flex-shrink:0;
+  padding:10px 14px;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,#fff0f0 60%,transparent);
+}
+.btn{width:100%;height:50px;border-radius:25px;border:none;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;letter-spacing:.5px;transition:all .25s}
+.btn.grey{background:#e8e8e8;color:#bbb;cursor:not-allowed}
+.btn.active{background:linear-gradient(135deg,#e02020,#ff4444);color:#fff;box-shadow:0 4px 16px rgba(224,32,32,.32)}
+.btn.active:active{transform:scale(.97)}
+.btn.orange{background:linear-gradient(135deg,#f5a623,#f8b84e);color:#fff;animation:glowO 1.6s ease-in-out infinite}
+@keyframes glowO{0%,100%{box-shadow:0 4px 16px rgba(245,166,35,.4)}50%{box-shadow:0 4px 28px rgba(245,166,35,.7)}}
+
+/* 彩屑 */
+.cf-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:300;display:none}
+.cf-wrap.show{display:block}
+.cfp{position:absolute;top:-20px;border-radius:2px;animation:cffall linear forwards}
+@keyframes cffall{0%{opacity:1;transform:translateY(0) rotate(0deg)}85%{opacity:1}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}
+
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="cf-wrap" id="cf"></div>
+<div class="wrap">
+
+  <!-- ===== 顶部固定区 ===== -->
+  <div class="page-header">
+    <div class="nav">
+      <span class="nav-back">&#8249;</span>
+      <span class="nav-title">彩票</span>
+      <div class="nav-logo">彩</div>
+    </div>
+    <div class="banner">
+      <div class="banner-deco"></div>
+      <div class="banner-deco2"></div>
+      <div class="b-tag" id="bTag">每期必玩</div>
+      <div class="b-title" id="bTitle">猜<span>蓝球</span>赢大奖</div>
+      <div class="b-prev-lbl">上期开奖号码</div>
+      <div class="b-balls">
+        <div class="bb red" id="pr1">05</div><div class="bb red" id="pr2">11</div>
+        <div class="bb red" id="pr3">17</div><div class="bb red" id="pr4">22</div>
+        <div class="bb red" id="pr5">28</div><div class="bb red" id="pr6">31</div>
+        <div class="b-plus">+</div>
+        <div class="bb blue" id="pr7">07</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 中间滚动区 ===== -->
+  <div class="scroll-area">
+
+    <!-- 期号 -->
+    <div class="period">
+      <div class="p-left">
+        <div class="p-icon">彩</div>
+        <div>
+          <div class="p-num" id="pNum">第 2026072 期</div>
+          <div class="p-sub">周四 21:00 开奖</div>
+        </div>
+      </div>
+      <div class="p-badge" id="pBadge" style="color:#e02020;background:#fff2f2">今日 21:00 开奖</div>
+    </div>
+
+    <!-- 主卡片 -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title" id="cardTitle">选择蓝球号码</div>
+        <div class="card-tip" id="cardTip">1—16 选 1</div>
+      </div>
+      <div class="state-panel">
+
+        <!-- S1: 选号 -->
+        <div class="sp active" id="sp-pick">
+          <div class="ball-row-wrap">
+            <div class="ball-row" id="grid1"></div>
+          </div>
+          <div class="sel-bar">
+            <div class="sel-l">已选：<b id="selNum">—</b></div>
+            <div class="sel-r">每期可猜 1 次</div>
+          </div>
+        </div>
+
+        <!-- S2: 待开奖 -->
+        <div class="sp" id="sp-wait">
+          <div class="wait-inner">
+            <div class="wait-lbl">你猜测的蓝球号码</div>
+            <div class="wait-ball-big" id="wBall">07</div>
+            <div class="wait-desc">今晚 21:00 开奖，届时自动揭晓结果</div>
+          </div>
+        </div>
+
+        <!-- S3: 老虎机过渡 -->
+        <div class="sp" id="sp-slot">
+          <div class="slot-wrap">
+            <div class="slot-lbl">开奖号码揭晓中…</div>
+            <div class="slot-drum"><div class="slot-inner" id="slotInner"></div></div>
+          </div>
+        </div>
+
+        <!-- S4: 结果 -->
+        <div class="sp" id="sp-result">
+          <div class="result-inner">
+            <div class="result-balls-row" id="resultBalls"></div>
+            <div class="cmp-row">
+              <div class="cmp-item">
+                <div class="cmp-lbl">蓝球开奖</div>
+                <div id="resultR" class="rb-b">07</div>
+              </div>
+              <div class="vs">VS</div>
+              <div class="cmp-item">
+                <div class="cmp-lbl">我的猜测</div>
+                <div id="resultM" class="rb-b">07</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 奖励（猜中才显示） -->
+    <div class="reward-bar hide" id="rewardBar">
+      <div class="reward-icon">&#127915;</div>
+      <div class="reward-info">
+        <div class="reward-title">彩票券 &times; 1 张</div>
+        <div class="reward-desc">奖励已到账，7 日内有效</div>
+      </div>
+      <button class="reward-btn">去使用</button>
+    </div>
+
+    <!-- 购彩（未猜中才显示） -->
+    <div class="upsell hide" id="upsellBar">
+      <div class="upsell-info">
+        <div class="upsell-title">手气不佳？购彩提升胜率</div>
+        <div class="upsell-desc">购买双色球彩票，更多好号等你来！</div>
+      </div>
+      <button class="upsell-btn">去购彩 →</button>
+    </div>
+
+    <!-- 底部 tab -->
+    <div class="bottom-tabs">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab(0)">猜球记录</button>
+        <button class="tab-btn" onclick="switchTab(1)">活动规则</button>
+      </div>
+      <div class="tab-panel active" id="tabHistory">
+        <div id="histList"></div>
+      </div>
+      <div class="tab-panel" id="tabRules">
+        <div class="rules">
+          <div class="rules-title">活动规则</div>
+          <div class="r-item">每期双色球开奖前可猜 1 次蓝球号码（1—16）</div>
+          <div class="r-item">猜中当期蓝球号码，即可获得彩票券奖励</div>
+          <div class="r-item">每周二、周四 21:00 开奖，次日 00:00 刷新</div>
+          <div class="r-item">奖励领取后 7 日内有效，请及时使用</div>
+          <div class="r-item">活动最终解释权归京东彩票所有</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- ===== 底部按钮固定区 ===== -->
+  <div class="btn-area">
+    <button class="btn grey" id="mainBtn" onclick="onMainBtn()">选择蓝球号码后确认</button>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// ---------- 状态 ----------
+var STATE = 'pick';
+var selNum = null;
+var prevResult = {rs:['05','11','17','22','28','31'], b:'07'};
+var hist = [
+  {p:'第 2026071 期 · 周二', rs:['05','11','17','22','28','31'], b:'07', g:'07', r:'win'},
+  {p:'第 2026070 期 · 周四', rs:['02','09','14','19','25','30'], b:'12', g:'05', r:'lose'}
+];
+
+function pad(n){ return ('0'+n).slice(-2); }
+
+// ---------- tab 切换 ----------
+function switchTab(idx){
+  document.querySelectorAll('.tab-btn').forEach(function(b,i){
+    b.classList.toggle('active', i===idx);
+  });
+  document.getElementById('tabHistory').classList.toggle('active', idx===0);
+  document.getElementById('tabRules').classList.toggle('active', idx===1);
+}
+
+// ---------- 初始化 ----------
+mkGrid(false,null);
+renderPrevBalls();
+renderHist();
+
+function renderHist(){
+  var c = document.getElementById('histList'); c.innerHTML='';
+  hist.forEach(function(rec){
+    var d = document.createElement('div'); d.className='h-item';
+    var reds = rec.rs.map(function(r){return '<div class="hb-r">'+r+'</div>';}).join('');
+    var bel = rec.r==='pending' ? '<div class="hb-b" style="opacity:.4">?</div>' : '<div class="hb-b">'+rec.b+'</div>';
+    var tc = rec.r==='win'?'win':rec.r==='lose'?'lose':'pending';
+    var tt = rec.r==='win'?'猜中了！':rec.r==='lose'?'未猜中':'待开奖';
+    d.innerHTML = '<div class="h-left"><div class="h-period">'+rec.p+'</div>'
+      +'<div class="h-balls">'+reds+bel
+      +'<span style="font-size:10px;color:#ccc;margin:0 3px">猜</span>'
+      +'<div class="hb-g">'+rec.g+'</div></div></div>'
+      +'<div class="h-tag '+tc+'">'+tt+'</div>';
+    c.appendChild(d);
+  });
+}
+
+// ---------- 选号网格 ----------
+function mkGrid(dis, sel2){
+  var g = document.getElementById('grid1'); g.innerHTML='';
+  for(var i=1;i<=16;i++){
+    var b = document.createElement('div');
+    b.className = 'bi'+(dis?' dis':'')+(sel2===i?' on':'');
+    b.textContent = pad(i);
+    if(!dis)(function(n,el){el.onclick=function(){pickBall(n,el);};})(i,b);
+    g.appendChild(b);
+  }
+}
+
+function pickBall(n, el){
+  document.getElementById('grid1').querySelectorAll('.bi').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  selNum = n;
+  document.getElementById('selNum').textContent = pad(n);
+  var btn = document.getElementById('mainBtn');
+  btn.className = 'btn active';
+  btn.textContent = '确认猜 '+pad(n)+' 号蓝球';
+}
+
+// ---------- 面板切换 ----------
+function showSP(id){
+  document.querySelectorAll('.sp').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+}
+
+// ---------- Banner ----------
+function setBanner(tag, sub){
+  document.getElementById('bTag').textContent = tag;
+}
+
+function renderPrevBalls(){
+  var ids=['pr1','pr2','pr3','pr4','pr5','pr6'];
+  ids.forEach(function(id,i){document.getElementById(id).textContent=prevResult.rs[i];});
+  document.getElementById('pr7').textContent=prevResult.b;
+}
+
+// ---------- 主按钮 ----------
+function onMainBtn(){
+  if(STATE==='pick'){ submitGuess(); }
+  else if(STATE==='win'||STATE==='lose'){ goNext(); }
+}
+
+// ---------- 确认猜测 ----------
+function submitGuess(){
+if(!selNum) return;
+  STATE = 'wait';
+  var ns = pad(selNum);
+  setBanner('等待开奖');
+  document.getElementById('pBadge').textContent='今晚 21:00';
+  document.getElementById('pBadge').style.cssText='color:#f5a623;background:#fff8e6';
+  document.getElementById('cardTitle').textContent='我的选择';
+  document.getElementById('cardTip').textContent='等待揭晓';
+  document.getElementById('wBall').textContent = ns;
+  showSP('sp-wait');
+  var btn = document.getElementById('mainBtn');
+  btn.className='btn grey'; btn.textContent='等待开奖结果…';
+  btn.style.pointerEvents='none';
+  setTimeout(doReveal, 800);
+  hist.unshift({p:'第 2026072 期 · 本期（周四）',rs:['?','?','?','?','?','?'],b:'?',g:ns,r:'pending'});
+  renderHist();
+}
+
+// ---------- 揭晓 ----------
+function doReveal(){
+  STATE = 'reveal';
+  document.getElementById('cardTitle').textContent='开奖揭晓';
+  document.getElementById('cardTip').textContent='号码揭晓中';
+  showSP('sp-slot');
+  var result = Math.floor(Math.random()*16)+1;
+  slotRoll(result, function(){ showResult(result); });
+}
+
+function slotRoll(final, cb){
+  var inner = document.getElementById('slotInner');
+  inner.innerHTML=''; inner.style.top='0';
+  var seq=[];
+  for(var i=0;i<5;i++) seq.push(Math.floor(Math.random()*16)+1);
+  seq.push(final);
+  seq.forEach(function(n){
+    var d=document.createElement('div');d.className='slot-num';d.textContent=pad(n);inner.appendChild(d);
+  });
+  var h=68, idx=0, speed=80, minSpeed=200;
+  function tick(){
+    idx++;
+    if(idx>=seq.length){ cb(); return; }
+    inner.style.transition='top '+(speed/1000)+'s linear';
+    inner.style.top=(-idx*h)+'px';
+    if(speed<minSpeed) speed=Math.min(speed*1.18,minSpeed);
+    var delay=idx<seq.length-4?speed*0.7:speed;
+    setTimeout(tick,delay);
+  }
+  setTimeout(tick,80);
+}
+
+// ---------- 展示结果 ----------
+function showResult(result){
+  var rs=pad(result), ms=pad(selNum);
+  var isWin = result===selNum;
+  var reds=[];
+  while(reds.length<6){var r=Math.floor(Math.random()*33)+1;if(reds.indexOf(r)<0)reds.push(r);}
+  reds.sort(function(a,b){return a-b;});
+  var redS=reds.map(pad);
+  if(hist[0]&&hist[0].r==='pending'){hist[0].rs=redS;hist[0].b=rs;hist[0].r=isWin?'win':'lose';}
+  var rb=document.getElementById('resultBalls'); rb.innerHTML='';
+  redS.forEach(function(r){var d=document.createElement('div');d.className='rb-r';d.textContent=r;rb.appendChild(d);});
+  var bd=document.createElement('div');bd.className='rb-b'+(isWin?' hl':'');bd.textContent=rs;rb.appendChild(bd);
+  var rEl=document.getElementById('resultR'), mEl=document.getElementById('resultM');
+  rEl.textContent=rs; rEl.className='rb-b';
+  if(isWin){mEl.textContent=ms;mEl.className='rb-b';}
+  else{mEl.textContent=ms;mEl.className='rb-g';}
+  STATE=isWin?'win':'lose';
+  showSP('sp-result');
+  var btn=document.getElementById('mainBtn');
+  if(isWin){
+    setBanner('猜中了！');
+    document.getElementById('cardTitle').textContent='开奖结果';
+    document.getElementById('cardTip').style.color='#1155cc';
+    document.getElementById('cardTip').textContent='猜中了！';
+    document.getElementById('pBadge').textContent='已开奖';
+    document.getElementById('pBadge').style.cssText='color:#1155cc;background:#eef3ff';
+    document.getElementById('rewardBar').classList.remove('hide');
+    btn.className='btn active'; btn.textContent='参与下一期猜球 →';
+    btn.style.pointerEvents='';
+    confetti();
+  } else {
+    setBanner('未猜中');
+    document.getElementById('cardTitle').textContent='开奖结果';
+    document.getElementById('cardTip').style.color='#aaa';
+    document.getElementById('cardTip').textContent='继续加油';
+    document.getElementById('pBadge').textContent='已开奖';
+    document.getElementById('pBadge').style.cssText='color:#aaa;background:#f5f5f5';
+    document.getElementById('upsellBar').classList.remove('hide');
+    btn.className='btn active'; btn.textContent='参与下一期猜球 →';
+    btn.style.pointerEvents='';
+  }
+  prevResult={rs:redS,b:rs};
+  renderPrevBalls();
+  renderHist();
+}
+
+// ---------- 下一期 ----------
+function goNext(){
+  STATE='pick'; selNum=null;
+  setBanner('每期必玩');
+  document.getElementById('pBadge').textContent='今日 21:00 开奖';
+  document.getElementById('pBadge').style.cssText='color:#e02020;background:#fff2f2';
+  document.getElementById('cardTitle').textContent='选择蓝球号码';
+  document.getElementById('cardTip').textContent='1—16 选 1';
+  document.getElementById('cardTip').style.color='';
+  document.getElementById('selNum').textContent='—';
+  document.getElementById('rewardBar').classList.add('hide');
+  document.getElementById('upsellBar').classList.add('hide');
+  var btn=document.getElementById('mainBtn');
+  btn.className='btn grey'; btn.textContent='选择蓝球号码后确认';
+  btn.style.pointerEvents='';
+  mkGrid(false,null);
+  showSP('sp-pick');
+  renderHist();
+}
+
+// ---------- 彩屑 ----------
+function confetti(){
+  var w=document.getElementById('cf'); w.innerHTML=''; w.classList.add('show');
+  var cs=['#e02020','#ff4444','#ffd200','#1155cc','#4488ff','#ff9500','#fff','#ff69b4'];
+  for(var i=0;i<80;i++){
+    var p=document.createElement('div'); p.className='cfp';
+    p.style.left=Math.random()*100+'%';
+    p.style.background=cs[Math.floor(Math.random()*cs.length)];
+    p.style.width=(5+Math.random()*9)+'px'; p.style.height=(5+Math.random()*9)+'px';
+    p.style.borderRadius=Math.random()>.5?'50%':'2px';
+    p.style.animationDuration=(2+Math.random()*2.5)+'s';
+    p.style.animationDelay=Math.random()*0.8+'s';
+    w.appendChild(p);
+  }
+  setTimeout(function(){w.classList.remove('show');},5500);
+}
+</script>
+</body>
+</html>
