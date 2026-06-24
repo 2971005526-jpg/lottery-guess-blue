@@ -201,7 +201,7 @@ body{font-family:-apple-system,'PingFang SC',sans-serif;display:flex;justify-con
     <div class="card">
       <div class="card-hd">
         <div class="card-title" id="cardTitle">选择蓝球号码</div>
-        <div class="card-tip" id="cardTip">1—16 选 1</div>
+        
       </div>
       <div class="state-panel">
         <div class="sp active" id="sp-pick">
@@ -500,7 +500,6 @@ function loadRealState(){
 function showPickState(){
   showSP('pick');
   document.getElementById('cardTitle').textContent='选择蓝球号码';
-  document.getElementById('cardTip').textContent='1—16 选 1';
   document.getElementById('rewardBar').classList.add('hide');
   document.getElementById('upsellBar').classList.add('hide');
   document.getElementById('nextDayTip').classList.add('hide');
@@ -515,7 +514,6 @@ function showWaitState(guess, isReal){
   showSP('wait');
   document.getElementById('wBall').textContent=guess||'?';
   document.getElementById('cardTitle').textContent='等待开奖';
-  document.getElementById('cardTip').textContent='';
   document.getElementById('rewardBar').classList.add('hide');
   document.getElementById('upsellBar').classList.add('hide');
   document.getElementById('nextDayTip').classList.add('hide');
@@ -551,7 +549,6 @@ function showResultState(drawData, guess, isWin){
   document.getElementById('resultM').className=isWin?'rb-b hl':'rb-g';
 
   document.getElementById('cardTitle').textContent=isWin?'猜中了！':'没猜中';
-  document.getElementById('cardTip').textContent='';
   document.getElementById('rewardBar').classList.toggle('hide',!isWin);
   document.getElementById('upsellBar').classList.toggle('hide',isWin);
   document.getElementById('nextDayTip').classList.add('hide');
@@ -572,7 +569,6 @@ function showLockedState(unlockTs){
   document.getElementById('waitCountdown').textContent='等待中';
   document.getElementById('waitOpenTime').textContent='明日 00:00 开放';
   document.getElementById('cardTitle').textContent='等待下一期';
-  document.getElementById('cardTip').textContent='';
   document.getElementById('nextDayTip').classList.remove('hide');
   setBtn('disabled-real','明天再来猜');
   startNextDayCountdown(unlockTs);
@@ -587,7 +583,6 @@ function loadTrialState(){
 function showPickStateTrial(){
   showSP('pick');
   document.getElementById('cardTitle').textContent='选择蓝球号码（试玩）';
-  document.getElementById('cardTip').textContent='1—16 选 1';
   document.getElementById('rewardBar').classList.add('hide');
   document.getElementById('upsellBar').classList.add('hide');
   document.getElementById('nextDayTip').classList.add('hide');
@@ -666,7 +661,6 @@ function doSlotReveal(guess, drawData, isWin){
   showSP('slot');
   setBtn('disabled-real','开奖中…');
   document.getElementById('cardTitle').textContent='开奖揭晓';
-  document.getElementById('cardTip').textContent='';
   var target=parseInt(drawData.b);
   runSlot(target, function(){
     showResultState(drawData, guess, isWin);
@@ -690,7 +684,6 @@ function doTrialReveal(guess){
   showSP('slot');
   setBtn('disabled-real','开奖中…');
   document.getElementById('cardTitle').textContent='揭晓中';
-  document.getElementById('cardTip').textContent='';
   runSlot(parseInt(fakeBlue), function(){
     showTrialResult(fakeData, guess, isWin);
   });
@@ -708,7 +701,6 @@ function showTrialResult(drawData, guess, isWin){
   document.getElementById('resultM').textContent=guess;
   document.getElementById('resultM').className=isWin?'rb-b hl':'rb-g';
   document.getElementById('cardTitle').textContent=isWin?'猜中了！（试玩）':'没猜中（试玩）';
-  document.getElementById('cardTip').textContent='';
   document.getElementById('rewardBar').classList.add('hide');
   document.getElementById('upsellBar').classList.toggle('hide',isWin);
   document.getElementById('nextDayTip').classList.add('hide');
