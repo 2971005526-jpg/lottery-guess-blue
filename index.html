@@ -308,18 +308,45 @@ function fmtHMS(ms){if(ms<=0)return '00:00:00';var s=Math.floor(ms/1000);var h=M
 function isDrawDay(date){var d=new Date(date);var w=d.getDay();return w===0||w===2||w===4;}
 
 // 根据今天日期计算当前期号 & 开奖时间戳
-// 开奖日历：2026070=2026-06-19(周四), 2026071=2026-06-24(周二)
+// 开奖日：周日=0，周二=2，周四=4
 function calcPeriod(){
   var now=new Date();
-  var todayStr=today8();
   var latest=REAL_DRAWS[0];
-  // 当前期 = 上期期号+1
-  var curP=String(parseInt(latest.p)+1);
-  // 开奖时间 = 今天 21:15:00
-  var drawTs=new Date(todayStr+'T21:15:00').getTime();
   var weekNames=['周日','周一','周二','周三','周四','周五','周六'];
-  var wn=weekNames[now.getDay()];
-  return {p:curP, drawTs:drawTs, wn:wn};
+  var drawWeekDays=[0,2,4];
+
+  // 从今天起找下一个（含今天）开奖日
+  // 今天是开奖日且21:15前 → 用今天；已过21:15 → 找下一个
+  var candidate=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
+  for(var i=0;i<7;i++){
+    var wd=candidate.getDay();
+    if(drawWeekDays.indexOf(wd)>=0){
+      var drawTs=new Date(candidate.getFullYear(),candidate.getMonth(),candidate.getDate(),21,15,0,0).getTime();
+      if(i===0 && now.getTime()>=drawTs){
+        candidate.setDate(candidate.getDate()+1);
+        continue;
+      }
+      var wn=weekNames[wd];
+      var latestDt=new Date(latest.date+'T21:15:00');
+      var candidateDt=new Date(candidate.getFullYear(),candidate.getMonth(),candidate.getDate(),21,15,0,0);
+      var extra=countDrawDaysBetween(latestDt,candidateDt);
+      var curP=String(parseInt(latest.p)+extra);
+      return {p:curP, drawTs:drawTs, wn:wn};
+    }
+    candidate.setDate(candidate.getDate()+1);
+  }
+  return {p:String(parseInt(latest.p)+1), drawTs:Date.now()+86400000, wn:'未知'};
+}
+
+// 计算两时间点之间（不含起点，含终点）的开奖日数量
+function countDrawDaysBetween(from,to){
+  var count=0;
+  var d=new Date(from);
+  d.setDate(d.getDate()+1);d.setHours(0,0,0,0);
+  var end=new Date(to);end.setHours(0,0,0,0);
+  var dwd=[0,2,4];
+  while(d<=end){if(dwd.indexOf(d.getDay())>=0)count++;d.setDate(d.getDate()+1);}
+  return count;
 }
 
 // 计算次日 00:00 时间戳
