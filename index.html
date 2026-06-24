@@ -406,6 +406,25 @@ function renderPeriodInfo(){
   var pi=periodInfo;
   document.getElementById('pNum').textContent='第 '+pi.p+' 期';
   document.getElementById('pSub').textContent=pi.wn+' 21:15 开奖';
+
+  // 动态 badge：今日/明日/周X开奖
+  var now=new Date();
+  var drawDate=new Date(pi.drawTs);
+  var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var drawDay=new Date(drawDate.getFullYear(),drawDate.getMonth(),drawDate.getDate());
+  var diffDays=Math.round((drawDay-today)/86400000);
+  var badgeEl=document.getElementById('pBadge');
+  var badgeText,badgeColor,badgeBg;
+  if(diffDays===0){
+    badgeText='今日开奖'; badgeColor='#e02020'; badgeBg='#fff2f2';
+  }else if(diffDays===1){
+    badgeText='明日开奖'; badgeColor='#d46b08'; badgeBg='#fff7e6';
+  }else{
+    badgeText=pi.wn+'开奖'; badgeColor='#595959'; badgeBg='#f5f5f5';
+  }
+  badgeEl.textContent=badgeText;
+  badgeEl.style.color=badgeColor;
+  badgeEl.style.background=badgeBg;
 }
 
 // ===== 模式切换 =====
